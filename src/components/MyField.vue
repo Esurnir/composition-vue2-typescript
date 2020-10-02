@@ -8,13 +8,7 @@
   />
 </template>
 <script lang="ts">
-import {
-  computed,
-  defineComponent,
-  ref,
-  watch,
-  watchEffect
-} from "@vue/composition-api";
+import { computed, defineComponent, ref, watch } from "@vue/composition-api";
 import { useStore } from "@/store";
 
 function premierFormatter(input: string) {
@@ -28,6 +22,19 @@ function premierFormatter(input: string) {
       }
     })
     .join(" ");
+}
+
+function formatText(text: string, format: string) {
+  switch (format) {
+    case "MAJUSCULE":
+      return text.toUpperCase();
+    case "Premier":
+      return premierFormatter(text);
+    case "minuscule":
+      return text.toLowerCase();
+    default:
+      return text;
+  }
 }
 
 export default defineComponent({
@@ -64,31 +71,29 @@ export default defineComponent({
     );
 
     const internalValue = ref("");
-    watchEffect(() => (internalValue.value = props.value));
-
-    const formattedText = computed(() => {
-      switch (props.formatage) {
-        case "MAJUSCULE":
-          return internalValue.value.toUpperCase();
-        case "Premier":
-          return premierFormatter(internalValue.value);
-        case "minuscule":
-          return internalValue.value.toLowerCase();
-        default:
-          return internalValue.value;
-      }
-    });
+    watch(
+      () => props.value,
+      () => {
+        if (formatText(props.value, props.formatage) != internalValue.value) {
+          internalValue.value = formatText(props.value, props.formatage);
+        }
+      },
+      { immediate: true }
+    );
 
     watch(
       () => props.formatage,
       () => {
-        internalValue.value = formattedText.value;
-        emit("input", internalValue.value);
+        const newValue = formatText(internalValue.value, props.formatage);
+        if (newValue !== internalValue.value) {
+          internalValue.value = newValue;
+          emit("input", newValue);
+        }
       }
     );
 
     function inputHandler() {
-      internalValue.value = formattedText.value;
+      internalValue.value = formatText(internalValue.value, props.formatage);
       if (props.eager) {
         emit("input", internalValue.value);
       }
@@ -103,7 +108,6 @@ export default defineComponent({
     return {
       internalValue,
       inputStyles,
-      formattedText,
       inputHandler,
       blurHandler
     };
