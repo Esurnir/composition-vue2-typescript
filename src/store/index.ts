@@ -3,9 +3,25 @@ import Vuex from "vuex";
 
 Vue.use(Vuex);
 
-export default new Vuex.Store({
-  state: {},
-  mutations: {},
-  actions: {},
+const store = new Vuex.Store({
+  state: {
+    theme: "default"
+  },
+  mutations: {
+    SET_SALMON(state) {
+      state.theme = "salmon";
+    }
+  },
+  actions: {
+    setSalmon({ commit }) {
+      commit("SET_SALMON");
+    }
+  },
   modules: {}
 });
+
+export default store;
+
+export function useStore() {
+  return store;
+}
