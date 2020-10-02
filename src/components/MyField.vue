@@ -8,7 +8,7 @@
   />
 </template>
 <script lang="ts">
-import { defineComponent } from "@vue/composition-api";
+import Vue from "vue";
 import { mapState } from "vuex";
 
 function premierFormatter(input: string) {
@@ -24,7 +24,7 @@ function premierFormatter(input: string) {
     .join(" ");
 }
 
-export default defineComponent({
+export default Vue.extend({
   props: {
     value: {
       type: String,
