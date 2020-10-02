@@ -8,8 +8,14 @@
   />
 </template>
 <script lang="ts">
-import Vue from "vue";
-import { mapState } from "vuex";
+import {
+  computed,
+  defineComponent,
+  ref,
+  watch,
+  watchEffect
+} from "@vue/composition-api";
+import { useStore } from "@/store";
 
 function premierFormatter(input: string) {
   const parts = input.split(" ");
@@ -24,7 +30,7 @@ function premierFormatter(input: string) {
     .join(" ");
 }
 
-export default Vue.extend({
+export default defineComponent({
   props: {
     value: {
       type: String,
@@ -33,7 +39,7 @@ export default Vue.extend({
     formatage: {
       type: String,
       default: "",
-      validator: value => {
+      validator: (value: string) => {
         if (
           value === "MAJUSCULE" ||
           value === "Premier" ||
@@ -51,51 +57,56 @@ export default Vue.extend({
       default: false
     }
   },
-  data() {
-    return {
-      internalValue: this.value as string
-    };
-  },
-  computed: {
-    ...mapState(["theme"]),
-    inputText(): string {
-      switch (this.formatage) {
+  setup(props, { emit }) {
+    const store = useStore();
+    const inputStyles = computed(() =>
+      store.state.theme === "salmon" ? "salmon" : ""
+    );
+
+    const internalValue = ref("");
+    watchEffect(() => (internalValue.value = props.value));
+
+    const formattedText = computed(() => {
+      switch (props.formatage) {
         case "MAJUSCULE":
-          return this.internalValue.toUpperCase();
+          return internalValue.value.toUpperCase();
         case "Premier":
-          return premierFormatter(this.internalValue);
+          return premierFormatter(internalValue.value);
         case "minuscule":
-          return this.internalValue.toLowerCase();
+          return internalValue.value.toLowerCase();
         default:
-          return this.internalValue;
+          return internalValue.value;
       }
-    },
-    inputStyles(): string {
-      if (this.theme === "salmon") {
-        return "salmon";
-      } else {
-        return "";
+    });
+
+    watch(
+      () => props.formatage,
+      () => {
+        internalValue.value = formattedText.value;
+        emit("input", internalValue.value);
       }
-    }
-  },
-  watch: {
-    formatage() {
-      this.internalValue = this.inputText;
-      this.$emit("input", this.internalValue);
-    }
-  },
-  methods: {
-    inputHandler() {
-      this.internalValue = this.inputText;
-      if (this.eager) {
-        this.$emit("input", this.internalValue);
-      }
-    },
-    blurHandler(event: Event) {
-      if (!this.eager) {
-        this.$emit("input", (event.target as HTMLInputElement).value);
+    );
+
+    function inputHandler() {
+      internalValue.value = formattedText.value;
+      if (props.eager) {
+        emit("input", internalValue.value);
       }
     }
+
+    function blurHandler(event: Event) {
+      if (!props.eager) {
+        emit("input", (event.target as HTMLInputElement).value);
+      }
+    }
+
+    return {
+      internalValue,
+      inputStyles,
+      formattedText,
+      inputHandler,
+      blurHandler
+    };
   }
 });
 </script>
