@@ -33,7 +33,7 @@ export default Vue.extend({
     formatage: {
       type: String,
       default: "",
-      validator: value => {
+      validator: (value: string) => {
         if (
           value === "MAJUSCULE" ||
           value === "Premier" ||
