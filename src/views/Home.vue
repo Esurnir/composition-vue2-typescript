@@ -10,6 +10,9 @@
       <button @click="setSalmon">Salmonify!</button>
     </div>
     <div>
+      <input v-model="test" />
+    </div>
+    <div>
       <button @click="switchFormat">{{ format || "Default" }}</button>
     </div>
     <p>{{ test }}</p>
@@ -35,7 +38,7 @@ export default Vue.extend({
   },
   data() {
     return {
-      test: "",
+      test: "Meuh",
       eager: false,
       format: "Premier"
     };

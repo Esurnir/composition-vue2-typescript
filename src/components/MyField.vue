@@ -1,6 +1,7 @@
 <template>
   <input
-    v-model="internalValue"
+    ref="monRef"
+    v-model="autoFormatter"
     :class="inputStyles"
     type="text"
     @input="inputHandler"
@@ -8,23 +9,11 @@
   />
 </template>
 <script lang="ts">
-import Vue from "vue";
-import { mapState } from "vuex";
+import { defineComponent, onMounted, ref, watch } from "@vue/composition-api";
+import { useAutoFormatter } from "@/composable/autoFormatter";
+import { useThemeSaumon } from "@/composable/themeSaumon";
 
-function premierFormatter(input: string) {
-  const parts = input.split(" ");
-  return parts
-    .map(value => {
-      if (value.length) {
-        return [...value[0].toUpperCase(), ...value.slice(1)].join("");
-      } else {
-        return "";
-      }
-    })
-    .join(" ");
-}
-
-export default Vue.extend({
+export default defineComponent({
   props: {
     value: {
       type: String,
@@ -51,51 +40,50 @@ export default Vue.extend({
       default: false
     }
   },
-  data() {
+  setup(props, { emit }) {
+    const {
+      internalValue: autoFormatter,
+      inputHandler,
+      blurHandler
+    } = useAutoFormatter(props, emit);
+
+    const monRef = ref<HTMLInputElement | null>(null);
+
+    // ne pas déconstruire props dans setup :
+    // const eager = props.eager;
+
+    watch(
+      // () => eager
+      () => props.eager,
+      () => {
+        // console.log(eager);
+        console.log(props.eager);
+      }
+    );
+
+    onMounted(() => {
+      console.log(monRef);
+      if (monRef.value) {
+        console.log(monRef.value.value);
+      }
+    });
+
+    function focusMonRef() {
+      if (monRef.value) {
+        monRef.value.focus();
+      }
+    }
+
+    const { inputStyles } = useThemeSaumon();
+
     return {
-      internalValue: this.value as string
+      autoFormatter,
+      inputHandler,
+      blurHandler,
+      inputStyles,
+      monRef,
+      focusMonRef
     };
-  },
-  computed: {
-    ...mapState(["theme"]),
-    inputText(): string {
-      switch (this.formatage) {
-        case "MAJUSCULE":
-          return this.internalValue.toUpperCase();
-        case "Premier":
-          return premierFormatter(this.internalValue);
-        case "minuscule":
-          return this.internalValue.toLowerCase();
-        default:
-          return this.internalValue;
-      }
-    },
-    inputStyles(): string {
-      if (this.theme === "salmon") {
-        return "salmon";
-      } else {
-        return "";
-      }
-    }
-  },
-  watch: {
-    formatage() {
-      this.internalValue = this.inputText;
-      this.$emit("input", this.internalValue);
-    }
-  },
-  methods: {
-    inputHandler() {
-      this.internalValue = this.inputText;
-      if (this.eager) {
-        this.$emit("input", this.internalValue);
-      }
-    },
-    blurHandler(event: Event) {
-      if (!this.eager) {
-        this.$emit("input", (event.target as HTMLInputElement).value);
-      }
-    }
   }
 });
 </script>
